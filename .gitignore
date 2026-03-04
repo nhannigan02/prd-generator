@@ -1,0 +1,16 @@
+# Environment / secrets — never commit API keys
+.env
+*.env
+.env.*
+
+# Mac clutter
+.DS_Store
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+
+# Any generated PRD output files
+*.txt
+output/

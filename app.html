@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>PRD Generator</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f4f5f7;
+      color: #172b4d;
+      min-height: 100vh;
+    }
+
+    header {
+      background: #0052cc;
+      color: white;
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    header h1 { font-size: 20px; font-weight: 600; }
+    header span { font-size: 13px; opacity: 0.8; }
+
+    .container {
+      max-width: 1100px;
+      margin: 32px auto;
+      padding: 0 24px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 8px;
+      padding: 24px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
+
+    .card h2 {
+      font-size: 15px;
+      font-weight: 600;
+      margin-bottom: 16px;
+      color: #172b4d;
+    }
+
+    .meta-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      font-size: 12px;
+      font-weight: 600;
+      color: #5e6c84;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+    }
+
+    input[type="text"], input[type="password"], textarea, select {
+      width: 100%;
+      border: 2px solid #dfe1e6;
+      border-radius: 4px;
+      padding: 8px 12px;
+      font-size: 14px;
+      font-family: inherit;
+      color: #172b4d;
+      background: #fafbfc;
+      transition: border-color 0.15s;
+      resize: vertical;
+    }
+
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    textarea:focus,
+    select:focus {
+      outline: none;
+      border-color: #0052cc;
+      background: white;
+    }
+
+    textarea { min-height: 160px; }
+
+    .api-row {
+      margin-bottom: 20px;
+      padding: 12px;
+      background: #f4f5f7;
+      border-radius: 4px;
+    }
+
+    .api-row label { margin-bottom: 6px; }
+
+    .api-note {
+      font-size: 11px;
+      color: #5e6c84;
+      margin-top: 6px;
+    }
+
+    .generate-btn {
+      width: 100%;
+      background: #0052cc;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      padding: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.15s;
+      margin-top: 16px;
+    }
+
+    .generate-btn:hover { background: #0065ff; }
+    .generate-btn:disabled { background: #b3bac5; cursor: not-allowed; }
+
+    /* Output panel — full width */
+    .output-panel {
+      grid-column: 1 / -1;
+    }
+
+    .output-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+
+    .output-header h2 { font-size: 15px; font-weight: 600; }
+
+    .copy-btn {
+      background: #ebecf0;
+      border: none;
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      color: #172b4d;
+      transition: background 0.15s;
+    }
+
+    .copy-btn:hover { background: #dfe1e6; }
+
+    #output {
+      white-space: pre-wrap;
+      font-family: "SF Mono", "Fira Code", monospace;
+      font-size: 13px;
+      line-height: 1.7;
+      background: #f4f5f7;
+      border-radius: 4px;
+      padding: 20px;
+      min-height: 200px;
+      color: #172b4d;
+      border: 2px solid #dfe1e6;
+    }
+
+    .status {
+      font-size: 13px;
+      color: #5e6c84;
+      margin-top: 12px;
+      min-height: 20px;
+    }
+
+    .status.error { color: #de350b; }
+    .status.success { color: #00875a; }
+
+    .spinner {
+      display: inline-block;
+      width: 14px;
+      height: 14px;
+      border: 2px solid #dfe1e6;
+      border-top-color: #0052cc;
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      vertical-align: middle;
+      margin-right: 6px;
+    }
+
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>PRD Generator</h1>
+    <span>Discovery notes → structured PRD with Epics & User Stories</span>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- Left: Meta + API key -->
+  <div class="card">
+    <h2>Project Details</h2>
+
+    <div class="api-row">
+      <label>Anthropic API Key</label>
+      <input type="password" id="apiKey" placeholder="sk-ant-..." />
+      <div class="api-note">Stored in memory only — never saved to disk.</div>
+    </div>
+
+    <div class="meta-row">
+      <div>
+        <label>Client Name</label>
+        <input type="text" id="clientName" placeholder="e.g. Barclays" />
+      </div>
+      <div>
+        <label>Project Name</label>
+        <input type="text" id="projectName" placeholder="e.g. Digital Onboarding" />
+      </div>
+    </div>
+
+    <div class="meta-row">
+      <div>
+        <label>Author</label>
+        <input type="text" id="author" placeholder="e.g. Niall" />
+      </div>
+      <div>
+        <label>FS Sector</label>
+        <select id="sector">
+          <option value="">— Select if known —</option>
+          <option>Retail Banking</option>
+          <option>Wealth Management</option>
+          <option>Insurance</option>
+          <option>Capital Markets</option>
+          <option>Payments</option>
+          <option>Lending</option>
+          <option>Compliance / RegTech</option>
+          <option>Other / Unknown</option>
+        </select>
+      </div>
+    </div>
+
+    <button class="generate-btn" id="generateBtn" onclick="generate()">
+      Generate PRD
+    </button>
+    <div class="status" id="status"></div>
+  </div>
+
+  <!-- Right: Inputs -->
+  <div class="card">
+    <h2>Discovery Inputs</h2>
+
+    <div style="margin-bottom: 16px;">
+      <label>Meeting Transcript</label>
+      <textarea id="transcript" placeholder="Paste your meeting transcript here (Teams, Otter, Fireflies etc.)..."></textarea>
+    </div>
+
+    <div>
+      <label>Typed Notes</label>
+      <textarea id="notes" placeholder="Paste any additional notes you typed during or after the meeting..."></textarea>
+    </div>
+  </div>
+
+  <!-- Output — full width -->
+  <div class="card output-panel">
+    <div class="output-header">
+      <h2>Generated PRD</h2>
+      <button class="copy-btn" onclick="copyOutput()">Copy to clipboard</button>
+    </div>
+    <div id="output">Your PRD will appear here...</div>
+  </div>
+
+</div>
+
+<script>
+  // System prompt lives in server.py — keeping the browser lean
+
+  // ── Main function ──────────────────────────────────────────────────────────
+  async function generate() {
+    const apiKey     = document.getElementById('apiKey').value.trim();
+    const transcript = document.getElementById('transcript').value.trim();
+    const notes      = document.getElementById('notes').value.trim();
+    const client     = document.getElementById('clientName').value.trim() || 'Unknown Client';
+    const project    = document.getElementById('projectName').value.trim() || 'Unknown Project';
+    const author     = document.getElementById('author').value.trim() || 'Unknown';
+    const sector     = document.getElementById('sector').value;
+
+    // Validation
+    if (!apiKey) return setStatus('Please enter your Anthropic API key.', 'error');
+    if (!transcript && !notes) return setStatus('Please paste at least a transcript or notes.', 'error');
+
+    const btn = document.getElementById('generateBtn');
+    btn.disabled = true;
+    setStatus('<span class="spinner"></span> Generating PRD — this takes 15–30 seconds...', '');
+    document.getElementById('output').textContent = '';
+
+    // Build user message
+    const userMessage = `Please generate a PRD from the following discovery session inputs.
+
+PROJECT: ${project}
+CLIENT: ${client}
+AUTHOR: ${author}
+DATE: ${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })}
+${sector ? `FS SECTOR: ${sector}` : ''}
+
+---TRANSCRIPT---
+${transcript || '(No transcript provided)'}
+
+---TYPED NOTES---
+${notes || '(No notes provided)'}`;
+
+    try {
+      // Call our local Python server (avoids browser CORS restrictions)
+      const response = await fetch('/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          apiKey,
+          transcript,
+          notes,
+          client,
+          project,
+          author,
+          sector,
+          date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
+        })
+      });
+
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || `Server error ${response.status}`);
+      const prd = data.prd;
+
+      document.getElementById('output').textContent = prd;
+      setStatus('PRD generated successfully.', 'success');
+
+    } catch (err) {
+      setStatus(`Error: ${err.message}`, 'error');
+    } finally {
+      btn.disabled = false;
+    }
+  }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
+  function setStatus(msg, type) {
+    const el = document.getElementById('status');
+    el.innerHTML = msg;
+    el.className = 'status ' + type;
+  }
+
+  function copyOutput() {
+    const text = document.getElementById('output').textContent;
+    if (!text || text === 'Your PRD will appear here...') return;
+    navigator.clipboard.writeText(text).then(() => {
+      const btn = document.querySelector('.copy-btn');
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = 'Copy to clipboard', 2000);
+    });
+  }
+
+  // Allow Cmd+Enter to generate
+  document.addEventListener('keydown', (e) => {
+    if ((e.metaKey || e.ctrlKey) && e.key === 'Enter') generate();
+  });
+</script>
+
+</body>
+</html>
