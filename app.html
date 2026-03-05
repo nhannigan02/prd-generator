@@ -463,26 +463,25 @@ ${transcript || '(No transcript provided)'}
 ${notes || '(No notes provided)'}`;
 
     try {
-      // Call Anthropic API directly from the browser (works from https:// hosted pages)
-      const response = await fetch('https://api.anthropic.com/v1/messages', {
+      // Call via local Python server (avoids browser CORS restrictions)
+      const response = await fetch('/generate', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-api-key': apiKey,
-          'anthropic-version': '2023-06-01',
-          'anthropic-dangerous-allow-browser': 'true'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          model: 'claude-sonnet-4-6',
-          max_tokens: 4096,
-          system: SYSTEM_PROMPT,
-          messages: [{ role: 'user', content: userMessage }]
+          apiKey,
+          transcript,
+          notes,
+          client,
+          project,
+          author,
+          sector,
+          date: new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' })
         })
       });
 
       const data = await response.json();
-      if (!response.ok) throw new Error(data.error?.message || `API error ${response.status}`);
-      const prd = data.content[0].text;
+      if (!response.ok) throw new Error(data.error || `Server error ${response.status}`);
+      const prd = data.prd;
 
       document.getElementById('output').textContent = prd;
       setStatus('PRD generated successfully.', 'success');
