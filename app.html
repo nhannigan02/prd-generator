@@ -158,7 +158,9 @@
       background: #f4f5f7;
       border-radius: 4px;
       padding: 20px;
-      min-height: 200px;
+      min-height: 400px;
+      max-height: 800px;
+      overflow-y: auto;
       color: #172b4d;
       border: 2px solid #dfe1e6;
     }
@@ -267,10 +269,13 @@
   <!-- Output — full width -->
   <div class="card output-panel">
     <div class="output-header">
-      <h2>Generated PRD</h2>
-      <button class="copy-btn" onclick="copyOutput()">Copy to clipboard</button>
+      <h2>Generated Discovery Synthesis</h2>
+      <div style="display:flex;gap:8px;">
+        <button class="copy-btn" onclick="copyOutput()">Copy to clipboard</button>
+        <button class="copy-btn" onclick="downloadOutput()" style="background:#e3fcef;color:#006644;">Download .txt</button>
+      </div>
     </div>
-    <div id="output">Your PRD will appear here...</div>
+    <div id="output">Your synthesis will appear here...</div>
   </div>
 
 </div>
@@ -502,12 +507,32 @@ ${notes || '(No notes provided)'}`;
 
   function copyOutput() {
     const text = document.getElementById('output').textContent;
-    if (!text || text === 'Your PRD will appear here...') return;
+    if (!text || text === 'Your synthesis will appear here...') return;
     navigator.clipboard.writeText(text).then(() => {
       const btn = document.querySelector('.copy-btn');
+      const original = btn.textContent;
       btn.textContent = 'Copied!';
-      setTimeout(() => btn.textContent = 'Copy to clipboard', 2000);
+      setTimeout(() => btn.textContent = original, 2000);
     });
+  }
+
+  function downloadOutput() {
+    const text = document.getElementById('output').textContent;
+    if (!text || text === 'Your synthesis will appear here...') return;
+    // Build a filename from project + client + date
+    const project = document.getElementById('projectName').value.trim() || 'project';
+    const client  = document.getElementById('clientName').value.trim() || 'client';
+    const date    = new Date().toISOString().slice(0,10); // YYYY-MM-DD
+    const filename = `${client}-${project}-discovery-synthesis-${date}.txt`
+      .toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9\-\.]/g, '');
+    // Create a temporary link and trigger download
+    const blob = new Blob([text], { type: 'text/plain' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = filename;
+    a.click();
+    URL.revokeObjectURL(url);
   }
 
   // Allow Cmd+Enter to generate
